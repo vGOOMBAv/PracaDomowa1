@@ -11,6 +11,17 @@ def root():
  
 @app.get("/method")
 def root():
-    buff_str=request.method.upper()
-    return {"method": buff_str}
+    return {"method": "GET"}
+ 
+@app.delete("/method")
+def root():
+    return {"method": "DELETE"}
+
+@app.post("/method")
+def root():
+    return {"method": "POST"}
+
+@app.get("/method")
+def root():
+    return {"method": "PUT"}
  
