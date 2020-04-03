@@ -21,7 +21,7 @@ def root():
 def root():
     return {"method": "POST"}
 
-@app.get("/method")
+@app.put("/method")
 def root():
     return {"method": "PUT"}
  
