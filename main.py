@@ -31,7 +31,7 @@ async def create_item(item: Item):
     #b_surname=item.surename.upper()
     #return {"id":a,"patient":{"name":item.name,"surename":item.surename}
     common=common+1
-    return {"id":a,"patient":{"name":item.name,"surename":item.surename}}
+    return {"id":common,"patient":{"name":item.name,"surename":item.surename}}
 
 @app.put("/method")
 def root():
