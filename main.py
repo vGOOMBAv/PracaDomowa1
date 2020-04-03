@@ -10,4 +10,5 @@ def root():
  
 @app.get("/{method}")
 async def read_item(method: str):
-    return {"method": f"{method}"}
+    buffStr=method.upper()
+    return {"method": buffStr}   
