@@ -7,6 +7,6 @@ app = FastAPI()
  
 @app.get("/method")
 def root():
-    buff_str=request.method
+    buff_str=request.method.upper()
     return {"method": buff_str}
  
