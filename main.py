@@ -4,6 +4,10 @@ from fastapi import FastAPI
 from flask import request
 
 app = FastAPI()
+
+@app.get("/")
+def root():
+    return {"message": "Hello World"}
  
 @app.get("/method")
 def root():
