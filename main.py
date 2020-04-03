@@ -9,6 +9,9 @@ class Item(BaseModel):
 	surename:str
 
 app = FastAPI()
+a=0
+async def common():
+    return a
 
 @app.get("/")
 def root():
@@ -27,13 +30,10 @@ async def create_item(item: Item):
     #b_name=item.name.upper()
     #b_surname=item.surename.upper()
     #return {"id":a,"patient":{"name":item.name,"surename":item.surename}
-    a=a+1
+    common=common+1
     return {"id":a,"patient":{"name":item.name,"surename":item.surename}}
 
 @app.put("/method")
 def root():
     return {"method": "PUT"}
 
-@app.context_processor
-def context_processpr():
-    return dict(a=0)
