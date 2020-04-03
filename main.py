@@ -1,14 +1,12 @@
 # main.py
  
 from fastapi import FastAPI
- 
+from flask import request
+
 app = FastAPI()
  
-@app.get("/")
+@app.get("/method")
 def root():
-    return {"message": "Hello World during the coronavirus pandemic"}
+    buff_str=request.method
+    return {"method": buff_str}
  
-@app.get("/{method}")
-async def read_item(method: str):
-    buffStr=method.upper()
-    return {"method": buffStr}   
