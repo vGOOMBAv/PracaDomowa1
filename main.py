@@ -1,5 +1,6 @@
 # main.py
  
+from typing import list
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from flask import Flask
@@ -9,9 +10,9 @@ class Item(BaseModel):
 	surename:str
 
 class Patient():
-    name=""
-    surename=""
-    id=0
+    name:str
+    surename:str
+    id:int
     def __init__(self, name_e:str, surename_e:str, id_e:int):
         self.name=name_e
         self.surename=surename_e
@@ -48,7 +49,7 @@ async def create_item(item: Item):
     app.counter+=1
     patient = Patient(item.name,item.surename,app.counter)
     app.patient_list.append(patient)
-    return {app.patient[app.count-1].name}
+    return {app.patient[app.counter-1].name}
 
 @app.put("/method")
 def root():
