@@ -19,8 +19,9 @@ class Patient():
         self.id=id_e
 
 app = FastAPI()
+a=0
 app.counter=0
-app.patient_list=[1,2,3]
+patient_list=[1,2,3]
 
 @app.get("/")
 def root():
@@ -46,10 +47,10 @@ def root():
 
 @app.post("/patient")
 async def create_item(item: Item):
-    app.counter+=1
+    global patient_list
     patient = Patient(item.name,item.surename,app.counter)
     app.patient_list.append(patient)
-    return {"{app.patient_list[0]}"}
+    return {patient_list[0]}
 
 @app.put("/method")
 def root():
