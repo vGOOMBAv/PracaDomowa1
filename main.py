@@ -36,7 +36,7 @@ def return_patient_data(id):
     if(is_patient==True):
         return {"name": app.patient_list[patient_pos].name, "surename": app.patient_list[patient_pos].surename}
     else:
-        raise HTTPException(status_code=404, detail="Patient not found")
+        raise HTTPException(status_code=204, detail="Patient not found")
  
 @app.delete("/method")
 def root():
