@@ -21,7 +21,7 @@ class Patient():
 app = FastAPI()
 a=0
 app.counter=0
-patient_list=[1,2,3]
+patient_list=[Patient('k','w',0),Patient('r','w',1),Patient('r','r',2)]
 
 @app.get("/")
 def root():
@@ -29,14 +29,17 @@ def root():
  
 @app.get("/patient/{id}")
 def return_patient_data(id):
+    global patient_list
     is_patient=False
     patient_pos=0
-    for i in range(app.patient_list.len()):
-        if(app.patient_list[i].id==id):
+    i=0
+    for patient in patient_list:
+        if(patient.id==id):
             is_patient=True
-            patient_pos=i
-    if(is_patient==True):
-        return {"name": app.patient_list[patient_pos].name, "surename": app.patient_list[patient_pos].surename}
+            patient_pos=0
+        i+=1
+    if(is_patient==False):
+        return {"name": patient_list[patient_pos].name, "surename": patient_list[patient_pos].surename}
     else:
         raise HTTPException(status_code=204, detail="Patient not found")
         return {"kek"}
@@ -47,10 +50,12 @@ def root():
 
 @app.post("/patient")
 async def create_item(item: Item):
-    global patient_list
-    patient = Patient(item.name,item.surename,app.counter)
-    app.patient_list.append(patient)
-    return {patient_list[3]}
+    #global patient_list
+    global a
+    #patient = Patient(item.name,item.surename,app.counter)
+    #app.patient_list.append(patient)
+    a+=1
+    return {"id":a,"patient":{"name":item.name,"surename":item.surename}}
 
 @app.put("/method")
 def root():
