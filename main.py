@@ -49,7 +49,7 @@ async def create_item(item: Item):
     app.counter+=1
     patient = Patient(item.name,item.surename,app.counter)
     app.patient_list.append(patient)
-    return {app.patient[app.counter-1]}
+    return {app.patient_list[app.counter-1]}
 
 @app.put("/method")
 def root():
