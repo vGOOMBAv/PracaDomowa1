@@ -20,7 +20,7 @@ class Patient():
 
 app = FastAPI()
 app.counter=0
-app.patient_list=[]
+app.patient_list=[1,2,3]
 
 @app.get("/")
 def root():
@@ -49,7 +49,7 @@ async def create_item(item: Item):
     app.counter+=1
     patient = Patient(item.name,item.surename,app.counter)
     app.patient_list.append(patient)
-    return {app.patient[app.counter-1].name}
+    return {app.patient[app.counter-1]}
 
 @app.put("/method")
 def root():
