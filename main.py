@@ -1,6 +1,6 @@
 # main.py
  
-from typing import list
+from typing import List
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from flask import Flask
