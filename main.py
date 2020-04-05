@@ -19,8 +19,8 @@ class Patient():
         self.id=id_e
 
 app = FastAPI()
-a=0
-app.counter=0
+a=-1
+
 patient_list=[]
 
 @app.get("/")
