@@ -33,11 +33,11 @@ def return_patient_data(id):
     is_patient=False
     patient_pos=0
     
-    if(int(id)<=a-1):
+    if(int(id)<=a):
         is_patient=True
     
     if(is_patient==True):
-        return {"name": patient_list[int(id)-1].name, "surename": patient_list[int(id)-1].surename}
+        return {"name": patient_list[int(id)].name, "surename": patient_list[int(id)].surename}
     else:
         raise HTTPException(status_code=204, detail="Patient not found")
         return {"kek"}
