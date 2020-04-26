@@ -4,6 +4,8 @@ from hashlib import sha256
 from fastapi import FastAPI, Response, Cookie, HTTPException
 from pydantic import BaseModel
 from requests.auth import HTTPBasicAuth
+from starlette.responses import RedirectResponse
+
 
 class Item(BaseModel):
 	name:str
@@ -29,6 +31,8 @@ def create_cookie(auth):
     auth_check=HTTPBasicAuth('trudnY', 'PaC13Nt')
     if auth!=auth_check:
         raise HTTPException(status_code=301)
+    else:
+        RedirectResponse(url = "/welcome")
     
 
 
