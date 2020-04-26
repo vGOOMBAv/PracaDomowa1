@@ -43,7 +43,7 @@ def check_cookie(session_token: str = Cookie(None)):
     return session_token
 
 @app.get("/welcome")
-def welcome_on_welcome(request: Request, response: Response, session_token: str = Depends(check_cookie)):
+def welcome_on_welcome(request: Request, response: Response, session_token = Depends(check_cookie)):
     if session_token is None:
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return MESSAGE_UNAUTHORIZED
