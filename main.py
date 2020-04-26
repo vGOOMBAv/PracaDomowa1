@@ -43,12 +43,12 @@ def check_cookie(session_token: str = Cookie(None)):
     return session_token
 
 @app.get("/welcome")
-def welcome(request: Request, response: Response, session_token: str = Depends(check_cookie)):
+def welcome_on_welcome(request: Request, response: Response, session_token: str = Depends(check_cookie)):
     if session_token is None:
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return MESSAGE_UNAUTHORIZED
-    username = app.sessions[session_token]
-    return templates.TemplateResponse("welcome.html", {"request": request, "user": username})
+    user = app.sessions[session_token]
+    return templates.TemplateResponse("welcome.html", {"request": request, "user": user})
 
 def login_check_cred(credentials: HTTPBasicCredentials = Depends(security)):
     correct = False
