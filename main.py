@@ -1,9 +1,9 @@
 # main.py
  
-from typing import List
-from fastapi import FastAPI, HTTPException
+from hashlib import sha256
+from fastapi import FastAPI, Response, Cookie, HTTPException
 from pydantic import BaseModel
-from flask import Flask
+from requests.auth import HTTPBasicAuth
 
 class Item(BaseModel):
 	name:str
@@ -23,13 +23,22 @@ a=-1
 
 patient_list=[]
 
+@app.post("/login")
+def create_cookie(user:str,password:str):
+    if user=='trudnY':
+        if password=='PaC13Nt':
+            app.get('/welcome')
+            
+
+
 @app.get("/")
 def root():
-    return {"message": "Hello World"}
+    app.get('/welcome')
+    
 
 @app.get("/welcome")
 def root():
-    return {"message": "Hello World"}
+    return {"message": "Hello World welcome"}
  
 @app.get("/patient/{id}")
 def return_patient_data(id):
