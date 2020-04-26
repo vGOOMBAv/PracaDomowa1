@@ -1,15 +1,11 @@
 # main.py
- 
+
 from hashlib import sha256
-from fastapi import FastAPI, Response, Cookie, HTTPException
-from pydantic import BaseModel
-from requests.auth import HTTPBasicAuth
 from starlette.responses import RedirectResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi import Depends, Response, HTTPException, FastAPI
+import secrets
 
-
-class Item(BaseModel):
-	name:str
-	surename:str
 
 class Patient():
     name:str
@@ -25,14 +21,21 @@ a=-1
 
 patient_list=[]
 
+security = HTTPBasic()
+app.secret_key = "very constatn and random secret, best 64 characters, here it is."
 
-@app.post("/login/")
-def create_cookie(auth):
-    auth_check=HTTPBasicAuth('trudnY', 'PaC13Nt')
-    if auth!=auth_check:
-        raise HTTPException(status_code=301)
-    else:
-       return RedirectResponse(url = "/welcome")
+session_tokens = []
+
+@app.post("/login")
+def get_current_user(response: Response, credentials: HTTPBasicCredentials = Depends(security)):
+    correct_username = secrets.compare_digest(credentials.username, "trudnY")
+    correct_password = secrets.compare_digest(credentials.password, "PaC13Nt")
+    if not (correct_username and correct_password):
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
+    session_token = sha256(bytes(f"{credentials.username}{credentials.password}{app.secret_key}", encoding='utf8')).hexdigest()
+    response.set_cookie(key="session_token", value=session_token)
+    session_tokens.append(session_token)
+    return RedirectResponse(url='/welcome')
     
 
 
@@ -63,14 +66,6 @@ def return_patient_data(id):
 @app.delete("/method")
 def root():
     return {"method": "DELETE"}
-
-@app.post("/patient")
-async def create_item(item: Item):
-    global patient_list
-    global a
-    patient_list.append(Patient(item.name,item.surename,a))
-    a+=1
-    return {"id":a,"patient":{"name":item.name,"surename":item.surename}}
 
 @app.put("/method")
 def root():
