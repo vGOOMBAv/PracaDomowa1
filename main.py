@@ -23,12 +23,16 @@ a=-1
 
 patient_list=[]
 
-@app.post("/login")
-def create_cookie(user:str,password:str):
-    if user=='trudnY':
-        if password=='PaC13Nt':
-            app.get('/welcome')
-            
+
+@app.post("/login/")
+def create_cookie(auth):
+    auth_check=HTTPBasicAuth('trudnY', 'PaC13Nt')
+    if auth==auth_check:
+        URL="http://testserver-python-level-up.herokuapp.com/welcome"
+        app.get(URL)
+    else:
+        raise HTTPException(status_code=301)
+    
 
 
 @app.get("/")
