@@ -26,6 +26,10 @@ patient_list=[]
 @app.get("/")
 def root():
     return {"message": "Hello World"}
+
+@app.get("/welcome")
+def root():
+    return {"message": "Hello World"}
  
 @app.get("/patient/{id}")
 def return_patient_data(id):
