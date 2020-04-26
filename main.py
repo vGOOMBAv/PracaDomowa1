@@ -32,7 +32,7 @@ def create_cookie(auth):
     if auth!=auth_check:
         raise HTTPException(status_code=301)
     else:
-        RedirectResponse(url = "/welcome")
+       return RedirectResponse(url = "/welcome")
     
 
 
