@@ -1,137 +1,106 @@
-from fastapi import FastAPI, Request, Response, status, Cookie, HTTPException, Depends
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from fastapi.templating import Jinja2Templates
+import sqlite3 
+from functools import wraps
+from fastapi import FastAPI, HTTPException
+from fastapi.exceptions import StarletteHTTPException as HTTP
 from pydantic import BaseModel
-from hashlib import sha256
-import secrets
-from routers import lecture4
+import fastapi.exceptions as exceptions
 
-# for debug
-from fastapi.encoders import jsonable_encoder
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-# end
+class Album(BaseModel):
+	title: str
+	artist_id: int
+
+class CustomerToChange(BaseModel):
+	company: str = None
+	address: str = None
+	city: str = None
+	state: str = None
+	country: str = None
+	postalcode: str = None
+	fax: str = None
+
+class NotFoundException(HTTPException):
+	def __init__(self, who : str):
+		super().__init__(status_code=404)
+		self.detail = {"error" : f"{who} not found.".capitalize()}
+
+def artist_exists(func):
+	@wraps(func)
+	def wrapper(*args,**kwargs):
+		album = kwargs['album']
+		artist = app.db_connection.execute(f'SELECT name FROM artists WHERE artistid = "{album.artist_id}"').fetchone()
+		if not artist:
+			raise NotFoundException("artist")
+		else:
+			return func(*args, **kwargs)
+	return wrapper
+
+def customer_exists(func):
+	@wraps(func)
+	def wrapper(*args,**kwargs):
+		id = kwargs['customer_id']
+		customer = app.db_connection.execute(f'SELECT firstname FROM customers WHERE customerid = "{id}"').fetchone()
+		if not customer:
+			raise NotFoundException("customer")
+		else:
+			return func(*args, **kwargs)
+	return wrapper
+
+
+def get_album_by_id(id : int):
+	app.db_connection.row_factory = sqlite3.Row
+	album = app.db_connection.execute(f'SELECT * FROM albums WHERE albumid="{id}"').fetchone()
+	return album
 
 app = FastAPI()
-security = HTTPBasic()
-templates = Jinja2Templates(directory="templates")
-app.secret_key = "wUYwdjICbQP70WgUpRajUwxnGChAKmRtfQgYASazava4p5In7pZpFPggdB4JDjlv"
-app.patients={}
-app.next_patient_id=0
-app.users={"trudnY":"PaC13Nt"}
-app.sessions={}
 
-app.include_router(lecture4.router)
+@app.on_event('startup')
+def startup():
+	app.db_connection = sqlite3.connect('chinook.db', check_same_thread=False)
 
-MESSAGE_UNAUTHORIZED = "Log in to access this page."
+@app.on_event('shutdown')
+def shutdown():
+	app.db_connection.close()
 
-# for debug
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    print(jsonable_encoder({"detail": exc.errors(), "body": exc.body}))
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content=jsonable_encoder({"detail": exc.errors(), "body": exc.body}),
-    )
-# end
+@app.get('/tracks/')
+def get_tracks_page(page:int = 0, per_page:int = 10):
+	app.db_connection.row_factory = sqlite3.Row
+	tracks = app.db_connection.execute(f'SELECT * FROM tracks LIMIT {per_page} OFFSET {page*per_page}').fetchall()
+	return tracks
 
-@app.get("/")
-def root():
-    return {"message": "Hello World during the coronavirus pandemic!"}
+@app.get('/tracks/composers/')
+def get_composer_by_name(composer_name:str):
+	app.db_connection.row_factory = lambda cursor,row: row[0]
+	tracks = app.db_connection.execute(f'SELECT name FROM tracks WHERE composer = "{composer_name}" ORDER BY name').fetchall()
+	if len(tracks)==0:
+		raise NotFoundException("composer")
+	return tracks
 
-def check_cookie(session_token: str = Cookie(None)):
-    if session_token not in app.sessions:
-        session_token = None
-    return session_token
+@app.post('/albums/', status_code=201)
+@artist_exists
+def create_new_album(album: Album):
+	app.db_connection.row_factory = lambda cursor,row: row[0]
+	album = app.db_connection.execute(
+		f'''INSERT INTO albums (title, artistid) 
+		VALUES ("{album.title}", "{album.artist_id}")'''
+	).lastrowid
+	app.db_connection.commit()
+	return get_album_by_id(album)
 
-@app.get("/welcome")
-def welcome(request: Request, response: Response, session_token: str = Depends(check_cookie)):
-    if session_token is None:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return MESSAGE_UNAUTHORIZED
-    username = app.sessions[session_token]
-    return templates.TemplateResponse("welcome.html", {"request": request, "user": username})
+@app.get('/albums/{album_id}')
+def get_album(album_id : int):
+	album = get_album_by_id(album_id)
+	if len(album)==0:
+		raise NotFoundException("album")
+	return album
 
-def login_check_cred(credentials: HTTPBasicCredentials = Depends(security)):
-    correct = False
-    for username, password in app.users.items():
-        correct_username = secrets.compare_digest(credentials.username, username)
-        correct_password = secrets.compare_digest(credentials.password, password)
-        if (correct_username and correct_password):
-            correct = True
-    if not correct:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect login or password",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-    session_token = sha256(bytes(f"{credentials.username}{credentials.password}{app.secret_key}", encoding='utf8')).hexdigest()
-    app.sessions[session_token]=credentials.username
-    return session_token
-
-
-#@app.get("/login") # for easier testing in the browser
-@app.post("/login")
-def login(response: Response, session_token: str = Depends(login_check_cred)):
-    response.status_code = status.HTTP_302_FOUND
-    response.headers["Location"] = "/welcome"
-    response.set_cookie(key="session_token", value=session_token)
-
-#@app.get("/logout") # for easier testing in the browser
-@app.post("/logout")
-def logout(response: Response, session_token: str = Depends(check_cookie)):
-    if session_token is None:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return MESSAGE_UNAUTHORIZED
-    response.status_code = status.HTTP_302_FOUND
-    response.headers["Location"] = "/"
-    app.sessions.pop(session_token)
-
-@app.get("/method")
-@app.post("/method")
-@app.put("/method")
-@app.delete("/method")
-def get_method(request: Request):
-    return {"method": str(request.method)}
-
-class PatientRq(BaseModel):
-    name: str
-    surname: str
-
-# note: it is possible to use "name: str = Body(None), surname..." instead of "rq: PatientRq"
-@app.post("/patient")
-def add_patient(response: Response, rq: PatientRq, session_token: str = Depends(check_cookie)):
-    if session_token is None:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return MESSAGE_UNAUTHORIZED
-    pid=f"id_{app.next_patient_id}"
-    app.patients[pid]=rq.dict()
-    response.status_code = status.HTTP_302_FOUND
-    response.headers["Location"] = f"/patient/{pid}"
-    app.next_patient_id+=1
-
-@app.get("/patient")
-def get_all_patients(response: Response, session_token: str = Depends(check_cookie)):
-    if session_token is None:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return MESSAGE_UNAUTHORIZED
-    if len(app.patients) != 0:
-        return app.patients
-    response.status_code = status.HTTP_204_NO_CONTENT
-
-@app.get("/patient/{pid}")
-def get_patient(pid: str, response: Response, session_token: str = Depends(check_cookie)):
-    if session_token is None:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return MESSAGE_UNAUTHORIZED
-    if pid in app.patients:
-        return app.patients[pid]
-    response.status_code = status.HTTP_204_NO_CONTENT
-
-@app.delete("/patient/{pid}")
-def remove_patient(pid: str, response: Response, session_token: str = Depends(check_cookie)):
-    if session_token is None:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return MESSAGE_UNAUTHORIZED
-    app.patients.pop(pid, None)
-    response.status_code = status.HTTP_204_NO_CONTENT
+@app.post('/customers/{customer_id}')
+@customer_exists
+def get_customer(customer_id:int, customer:CustomerToChange):
+	app.db_connection.row_factory = sqlite3.Row
+	cursor = app.db_connection.cursor()
+	tmp = customer.dict()
+	for key in tmp:
+		if tmp[key]:
+			cursor.execute(f'UPDATE customers SET {key} = "{tmp[key]}" WHERE customerid = {customer_id}')
+	app.db_connection.commit()
+	return cursor.execute(f'SELECT * FROM customers WHERE customerid = {customer_id}').fetchone()
